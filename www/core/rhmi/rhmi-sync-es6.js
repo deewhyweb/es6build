@@ -10,8 +10,8 @@ import {
 import gql from "graphql-tag";
 angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
   const config = {
-    httpUrl: "https://tech-connect-tech-connect-test.e785.tke-2.openshiftapps.com",
-    wsUrl: "ws://tech-connect-tech-connect-test.e785.tke-2.openshiftapps.com"
+    httpUrl: "https://tech-connect-tech-connect-test.e785.tke-2.openshiftapps.com/graphql",
+    wsUrl: "ws://tech-connect-tech-connect-test.e785.tke-2.openshiftapps.com/graphql"
   };
 
   const GET_ADMIN_TASKS = gql`
@@ -76,7 +76,7 @@ query getAllAdminTasks {
         //Print the response of the query
         .then(({ data }) => {
           console.log('DAVE: ', data);
-          cb(null, data.getAdminTasks);
+          cb(null, data.getAllAdminTasks);
         })
         .catch(err => {
           cb(err);
