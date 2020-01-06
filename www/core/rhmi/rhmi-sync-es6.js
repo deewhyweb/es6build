@@ -10,9 +10,11 @@ import {
 import gql from "graphql-tag";
 angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
   const config = {
-    httpUrl: "https://tech-connect-tech-connect-test.e785.tke-2.openshiftapps.com/graphql",
-    wsUrl: "ws://tech-connect-tech-connect-test.e785.tke-2.openshiftapps.com/graphql"
+    httpUrl: "http://localhost:8001/graphql",
+    wsUrl: "ws://localhost:8001/graphql"
   };
+
+  const clientPromise = createClient(config);
 
   const GET_ADMIN_TASKS = gql`
   query getAdminTasks($branchNumber: Int, $costCenter: Int) {
@@ -65,17 +67,13 @@ query getAllAdminTasks {
 }
 `
   function getAllAdminTasks(cb) {
-    //TODO if branchNumber or costCenter are null, should we return all or none?
-    createClient(config).then(client => {
+    Promise.resolve(clientPromise).then(client => {
       client
         .query({
           fetchPolicy: "network-only",
           query: GET_ALL_ADMIN_TASKS
-          //variables: {'branchNumber': branchNumber, 'costCenter': costCenter}
         })
-        //Print the response of the query
         .then(({ data }) => {
-          console.log('DAVE: ', data);
           cb(null, data.getAllAdminTasks);
         })
         .catch(err => {
@@ -83,8 +81,26 @@ query getAllAdminTasks {
         });
     });
   }
+
+  function getAdminTasks(branchNo, costCenter, cb) {
+    Promise.resolve(clientPromise).then(client => {
+      client
+        .query({
+          fetchPolicy: "network-only",
+          query: GET_ADMIN_TASKS,
+          variables: {'branchNo': branchNo, 'costCenter': costCenter}
+        })
+        .then(({ data }) => {
+          cb(null, data.getAdminTasks);
+        })
+        .catch(err => {
+          cb(err);
+        });
+    });
+  }
+
   function subscribeToTasks() {
-    createClient(config).then(client => {
+    Promise.resolve(clientPromise).then(client => {
       const tasks = client.watchQuery({
         fetchPolicy: "network-only",
         query: GET_ALL_ADMIN_TASKS
@@ -101,6 +117,7 @@ query getAllAdminTasks {
   }
   return {
     getAllAdminTasks,
+    getAdminTasks,
     subscribeToTasks
   };
 });
