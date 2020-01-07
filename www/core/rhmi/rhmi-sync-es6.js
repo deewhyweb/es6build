@@ -14,7 +14,7 @@ angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
     wsUrl: "ws://localhost:8004/graphql"
   };
 
-  //const clientPromise = createClient(config);
+  const clientPromise = createClient(config);
 
   const GET_ADMIN_TASKS = gql`
   query getAdminTasks($branchNumber: String!, $costCenter: String!) {
@@ -67,7 +67,7 @@ query getAllAdminTasks {
 }
 `
   function getAllAdminTasks(cb) {
-    createClient(config).then(client => {
+    Promise.resolve(clientPromise).then(client => {
       client
         .query({
           fetchPolicy: "network-only",
@@ -88,7 +88,7 @@ query getAllAdminTasks {
       query: GET_ADMIN_TASKS,
       variables: {'branchNumber': branchNo, 'costCenter': costCenter}
     };
-    createClient(config).then(client => {
+    Promise.resolve(clientPromise).then(client => {
       client
         .query(query)
         .then(({ data }) => {
@@ -101,7 +101,7 @@ query getAllAdminTasks {
   }
 
   function subscribeToTasks() {
-    createClient(config).then(client => {
+    Promise.resolve(clientPromise).then(client => {
       const tasks = client.watchQuery({
         fetchPolicy: "network-only",
         query: GET_ALL_ADMIN_TASKS
