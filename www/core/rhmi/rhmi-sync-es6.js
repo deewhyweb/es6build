@@ -10,15 +10,15 @@ import {
 import gql from "graphql-tag";
 angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
   const config = {
-    httpUrl: "http://localhost:8001/graphql",
-    wsUrl: "ws://localhost:8001/graphql"
+    httpUrl: "https://tech-connect-tech-connect-test.e785.tke-2.openshiftapps.com/graphql",
+    wsUrl: "ws://tech-connect-tech-connect-test.e785.tke-2.openshiftapps.com/graphql"
   };
 
-  const clientPromise = createClient(config);
+  //const clientPromise = createClient(config);
 
   const GET_ADMIN_TASKS = gql`
-  query getAdminTasks($branchNumber: Int, $costCenter: Int) {
-    getAdminTasks(fields: {branchNumber: $branchNumber, costCenter: $costCenter}) {
+  query getAdminTasks($branchNumber: String!, $costCenter: String!) {
+    getAdminTasks(branchNo: $branchNumber, costCenter: $costCenter) {
       projectId
       projectNumber
       ebsProjectName
@@ -67,13 +67,15 @@ query getAllAdminTasks {
 }
 `
   function getAllAdminTasks(cb) {
-    Promise.resolve(clientPromise).then(client => {
+    console.log('ALL STARTING');
+    createClient(config).then(client => {
       client
         .query({
           fetchPolicy: "network-only",
           query: GET_ALL_ADMIN_TASKS
         })
         .then(({ data }) => {
+          console.log('ALL DONE');
           cb(null, data.getAllAdminTasks);
         })
         .catch(err => {
@@ -83,14 +85,17 @@ query getAllAdminTasks {
   }
 
   function getAdminTasks(branchNo, costCenter, cb) {
-    Promise.resolve(clientPromise).then(client => {
+    const query = {
+      fetchPolicy: "network-only",
+      query: GET_ADMIN_TASKS,
+      variables: {'branchNumber': branchNo, 'costCenter': costCenter}
+    };
+    console.log('DAVE1: ', query);
+    createClient(config).then(client => {
       client
-        .query({
-          fetchPolicy: "network-only",
-          query: GET_ADMIN_TASKS,
-          variables: {'branchNo': branchNo, 'costCenter': costCenter}
-        })
+        .query(query)
         .then(({ data }) => {
+          console.log('DAVE2: ', data);
           cb(null, data.getAdminTasks);
         })
         .catch(err => {
@@ -100,7 +105,7 @@ query getAllAdminTasks {
   }
 
   function subscribeToTasks() {
-    Promise.resolve(clientPromise).then(client => {
+    createClient(config).then(client => {
       const tasks = client.watchQuery({
         fetchPolicy: "network-only",
         query: GET_ALL_ADMIN_TASKS
