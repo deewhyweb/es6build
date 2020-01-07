@@ -10,7 +10,7 @@ import {
 import gql from "graphql-tag";
 angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
   const config = {
-    httpUrl: "https://localhost:8004/graphql",
+    httpUrl: "http://localhost:8004/graphql",
     wsUrl: "ws://localhost:8004/graphql"
   };
 
