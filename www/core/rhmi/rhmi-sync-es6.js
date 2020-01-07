@@ -9,15 +9,16 @@ import {
 } from "@aerogear/voyager-client";
 import gql from "graphql-tag";
 angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
-  //$scope.message = "Hello World";
   const config = {
     httpUrl: "http://localhost:8001/graphql",
     wsUrl: "ws://localhost:8001/graphql"
   };
 
-  const TASKS_SUBSCRIPTION = gql`
-  query allTasks {
-    allTasks {
+  const clientPromise = createClient(config);
+
+  const GET_ADMIN_TASKS = gql`
+  query getAdminTasks($branchNumber: Int, $costCenter: Int) {
+    getAdminTasks(fields: {branchNumber: $branchNumber, costCenter: $costCenter}) {
       projectId
       projectNumber
       ebsProjectName
@@ -40,31 +41,73 @@ angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
     }
   }
 `
-  function getAllTasks(cb) {
-    createClient(config).then(client => {
+const GET_ALL_ADMIN_TASKS = gql`
+query getAllAdminTasks {
+  getAllAdminTasks {
+    projectId
+    projectNumber
+    ebsProjectName
+    projectName
+    lastUpdateDate
+    creationDate
+    startDate
+    endDate
+    branchNo
+    costCenter
+    enabledFlag
+    projectType
+    taskNumber
+    taskID
+    taskName
+    taskStartDate
+    taskEndDate
+    curentDate
+    expenditureTypes
+  }
+}
+`
+  function getAllAdminTasks(cb) {
+    Promise.resolve(clientPromise).then(client => {
       client
         .query({
           fetchPolicy: "network-only",
-          query: TASKS_SUBSCRIPTION
+          query: GET_ALL_ADMIN_TASKS
         })
-        //Print the response of the query
         .then(({ data }) => {
-          cb(null, data.allTasks);
+          cb(null, data.getAllAdminTasks);
         })
         .catch(err => {
           cb(err);
         });
     });
   }
+
+  function getAdminTasks(branchNo, costCenter, cb) {
+    Promise.resolve(clientPromise).then(client => {
+      client
+        .query({
+          fetchPolicy: "network-only",
+          query: GET_ADMIN_TASKS,
+          variables: {'branchNo': branchNo, 'costCenter': costCenter}
+        })
+        .then(({ data }) => {
+          cb(null, data.getAdminTasks);
+        })
+        .catch(err => {
+          cb(err);
+        });
+    });
+  }
+
   function subscribeToTasks() {
-    createClient(config).then(client => {
+    Promise.resolve(clientPromise).then(client => {
       const tasks = client.watchQuery({
         fetchPolicy: "network-only",
-        query: TASKS_SUBSCRIPTION
+        query: GET_ALL_ADMIN_TASKS
       });
 
       tasks.subscribeToMore({
-        document: TASKS_SUBSCRIPTION,
+        document: GET_ALL_ADMIN_TASKS,
         updateQuery: (prev, { subscriptionData }) => {
           // Update logic here.
         }
@@ -73,7 +116,8 @@ angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
     });
   }
   return {
-    getAllTasks,
+    getAllAdminTasks,
+    getAdminTasks,
     subscribeToTasks
   };
 });
