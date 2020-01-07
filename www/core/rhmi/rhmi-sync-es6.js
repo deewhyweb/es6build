@@ -10,15 +10,15 @@ import {
 import gql from "graphql-tag";
 angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
   const config = {
-    httpUrl: "http://localhost:8001/graphql",
-    wsUrl: "ws://localhost:8001/graphql"
+    httpUrl: "http://localhost:8004/graphql",
+    wsUrl: "ws://localhost:8004/graphql"
   };
 
   const clientPromise = createClient(config);
 
   const GET_ADMIN_TASKS = gql`
-  query getAdminTasks($branchNumber: Int, $costCenter: Int) {
-    getAdminTasks(fields: {branchNumber: $branchNumber, costCenter: $costCenter}) {
+  query getAdminTasks($branchNumber: String!, $costCenter: String!) {
+    getAdminTasks(branchNo: $branchNumber, costCenter: $costCenter) {
       projectId
       projectNumber
       ebsProjectName
@@ -83,13 +83,14 @@ query getAllAdminTasks {
   }
 
   function getAdminTasks(branchNo, costCenter, cb) {
+    const query = {
+      fetchPolicy: "network-only",
+      query: GET_ADMIN_TASKS,
+      variables: {'branchNumber': branchNo, 'costCenter': costCenter}
+    };
     Promise.resolve(clientPromise).then(client => {
       client
-        .query({
-          fetchPolicy: "network-only",
-          query: GET_ADMIN_TASKS,
-          variables: {'branchNo': branchNo, 'costCenter': costCenter}
-        })
+        .query(query)
         .then(({ data }) => {
           cb(null, data.getAdminTasks);
         })
