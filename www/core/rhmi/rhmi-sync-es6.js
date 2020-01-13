@@ -1,11 +1,6 @@
 "use strict";
 import {
   createClient,
-  VoyagerClient,
-  DataSyncConfig,
-  OfflineQueueListener,
-  ConflictListener,
-  AuthContextProvider
 } from "@aerogear/voyager-client";
 import gql from "graphql-tag";
 angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
@@ -14,111 +9,23 @@ angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
     wsUrl: "ws://localhost:8004/graphql"
   };
 
-  const clientPromise = createClient(config);
+  let clientPromise = createClient(config);
 
-  const GET_ADMIN_TASKS = gql`
-  query getAdminTasks($branchNumber: String!, $costCenter: String!) {
-    getAdminTasks(branchNo: $branchNumber, costCenter: $costCenter) {
-      projectId
-      projectNumber
-      ebsProjectName
-      projectName
-      lastUpdateDate
-      creationDate
-      startDate
-      endDate
-      branchNo
-      costCenter
-      enabledFlag
-      projectType
-      taskNumber
-      taskID
-      taskName
-      taskStartDate
-      taskEndDate
-      curentDate
-      expenditureTypes
-    }
-  }
-`
-const GET_ALL_ADMIN_TASKS = gql`
-query getAllAdminTasks {
-  getAllAdminTasks {
-    projectId
-    projectNumber
-    ebsProjectName
-    projectName
-    lastUpdateDate
-    creationDate
-    startDate
-    endDate
-    branchNo
-    costCenter
-    enabledFlag
-    projectType
-    taskNumber
-    taskID
-    taskName
-    taskStartDate
-    taskEndDate
-    curentDate
-    expenditureTypes
-  }
-}
-`
-  function getAllAdminTasks(cb) {
-    Promise.resolve(clientPromise).then(client => {
-      client
-        .query({
-          fetchPolicy: "network-only",
-          query: GET_ALL_ADMIN_TASKS
-        })
-        .then(({ data }) => {
-          cb(null, data.getAllAdminTasks);
-        })
-        .catch(err => {
-          cb(err);
-        });
-    });
+  function initClient (config) {
+    clientPromise = createClient(config);
   }
 
-  function getAdminTasks(branchNo, costCenter, cb) {
-    const query = {
-      fetchPolicy: "network-only",
-      query: GET_ADMIN_TASKS,
-      variables: {'branchNumber': branchNo, 'costCenter': costCenter}
-    };
-    Promise.resolve(clientPromise).then(client => {
-      client
-        .query(query)
-        .then(({ data }) => {
-          cb(null, data.getAdminTasks);
-        })
-        .catch(err => {
-          cb(err);
-        });
-    });
+  function getClient() {
+    return Promise.resolve(clientPromise);
   }
 
-  function subscribeToTasks() {
-    Promise.resolve(clientPromise).then(client => {
-      const tasks = client.watchQuery({
-        fetchPolicy: "network-only",
-        query: GET_ALL_ADMIN_TASKS
-      });
-
-      tasks.subscribeToMore({
-        document: GET_ALL_ADMIN_TASKS,
-        updateQuery: (prev, { subscriptionData }) => {
-          // Update logic here.
-        }
-      });
-      return tasks;
-    });
+  function initializeQuery(query) {
+    return gql(query);
   }
+  
   return {
-    getAllAdminTasks,
-    getAdminTasks,
-    subscribeToTasks
+    initClient,
+    getClient,
+    initializeQuery
   };
 });
