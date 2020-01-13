@@ -1,11 +1,6 @@
 "use strict";
 import {
   createClient,
-  VoyagerClient,
-  DataSyncConfig,
-  OfflineQueueListener,
-  ConflictListener,
-  AuthContextProvider
 } from "@aerogear/voyager-client";
 import gql from "graphql-tag";
 angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
@@ -14,7 +9,11 @@ angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
     wsUrl: "ws://localhost:8004/graphql"
   };
 
-  const clientPromise = createClient(config);
+  let clientPromise = createClient(config);
+
+  function initClient (config) {
+    clientPromise = createClient(config);
+  }
 
   function getClient() {
     return Promise.resolve(clientPromise);
@@ -23,7 +22,9 @@ angular.module("phoenix.core.rhmi.sync", []).factory("rhmiSync", function() {
   function initializeQuery(query) {
     return gql(query);
   }
+  
   return {
+    initClient,
     getClient,
     initializeQuery
   };
